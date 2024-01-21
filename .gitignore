@@ -2,6 +2,10 @@
 node_modules
 /dist
 
+# Misc folders and files
+data
+inspiration
+src/assets
 
 # local env files
 .env.local
