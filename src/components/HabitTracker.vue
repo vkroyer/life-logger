@@ -1,8 +1,16 @@
 <template>
   <div class="habit-tracker">
     <h2>Habit Tracker</h2>
-    <h3 class="week-of">Week {{ weekNumber }}</h3>
+    <h3 class="current-week-header">Week {{ weekNumber }} - {{ yearNumber }}</h3>
     <div class="habits-grid">
+      <div class="header">
+        <div class="header-item">Habits</div>
+        <div class="header-item dates">
+          <div class="date" v-for="(date, index) in weekDatesFormatted" :key="index">
+            {{ date }}
+          </div>
+        </div>
+      </div>
       <div class="habit-names">
         <div class="habit-name" v-for="habit in habits" :key="`name-${habit.HabitID}`">
           {{ habit.HabitName }}
@@ -21,6 +29,7 @@
             <transition name="fade">
               <div class="checkmark" v-if="habit.days[dayIndex]">✓</div>
             </transition>
+            <!-- <div class="date">{{ weekDates[dayIndex].getDate() }}</div> -->
           </div>
         </div>
       </div>
@@ -34,9 +43,10 @@
     data() {
       return {
         weekNumber: this.getWeekNumber(),
+        yearNumber: new Date().getFullYear(),
         days: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
         habits: [],
-        currentWeek: null,
+        weekDatesFormatted: this.getWeekDates(),
       };
     },
     methods: {
@@ -64,18 +74,27 @@
         const adjustedToday = today === 0 ? 6 : today - 1; // Adjust for Monday as 0, Tuesday as 1, etc.
         return dayIndex > adjustedToday;
       },
+      getFormattedDate(date) {
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = (date.getMonth() + 1).toString().padStart(2, '0');
+        return `${day}/${month}`;
+      },
       getWeekDates() {
         const today = new Date();
         const dayOfWeek = today.getDay();
         const weekStart = new Date(today); // Copy date
         weekStart.setDate(today.getDate() - dayOfWeek + 1); // Set date to Monday
+        const weekStartFormatted = this.getFormattedDate(weekStart);
         const weekDates = [weekStart];
+        const weekDatesFormatted = [weekStartFormatted];
         for (let i = 1; i < 7; i += 1) {
           const nextDay = new Date(weekDates[i - 1]);
           nextDay.setDate(weekDates[i - 1].getDate() + 1);
+          const nextDayFormatted = this.getFormattedDate(nextDay);
           weekDates.push(nextDay);
+          weekDatesFormatted.push(nextDayFormatted);
         }
-        return weekDates;
+        return weekDatesFormatted;
       },
       getWeekNumber() {
         const now = new Date();
@@ -87,7 +106,7 @@
       },
     },
     async created() {
-      this.currentWeek = this.getWeekDates();
+      // this.currentWeek = this.getWeekDates();
       this.habits = await this.getHabits();
     },
   };
@@ -101,10 +120,36 @@
     width: 100%;
   }
 
-  .habits-grid {
+  /* .habits-grid {
     display: grid;
     grid-template-columns: auto 1fr;
     gap: 10px;
+  } */
+
+  .habits-grid {
+    display: grid;
+    grid-template-columns: auto auto 1fr; /* Adjusted for three columns */
+    gap: 10px;
+  }
+
+  .header {
+    grid-column: 1 / -1; /* Span across all columns */
+    display: flex;
+    justify-content: space-between;
+  }
+  /* .header {
+    display: flex;
+    justify-content: space-between;
+  } */
+
+  .header-item {
+    flex: 1;
+    text-align: center;
+  }
+
+  .header-item.dates {
+    display: flex;
+    justify-content: space-between;
   }
 
   .habit-names, .habit-days {
@@ -119,8 +164,8 @@
   }
   
   .habit-name {
+    grid-column: 2;
     justify-content: flex-end; /* This will right-align the habit name */
-    /* make a font style that is like handwriting */
     font-family: 'Dancing Script', cursive;
     font-size: 1.5rem;
     font-weight: bold;
@@ -129,8 +174,13 @@
 
   .info-icon {
     margin-left: 5px;
-    color: #007BFF; /* Bootstrap primary color */
+    color: #007BFF;
     cursor: pointer;
+  }
+
+  .days {
+    grid-column: 3;
+    grid-template-columns: repeat(7, 1fr);
   }
   
   .days .day {
